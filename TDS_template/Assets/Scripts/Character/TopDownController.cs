@@ -4,45 +4,57 @@ using UnityEngine;
 
 public class TopDownController : MonoBehaviour
 {
-    [Header("Gravity")]
-
-    [SerializeField] private float _gravity = 40f;
-    [SerializeField] private bool _grounded = false;
-    [SerializeField] private bool _justGotGrounded = false;
-    [SerializeField] private bool _groundedLastFrame = false;
+    private CharacterController _characterController;
+    private CollisionFlags _collisionFlags;
+    private Vector3 _motion;
     private Vector3 _newVelocity;
-    [SerializeField] private Vector3 _velocity;
-    [SerializeField] private float _maximumFallSpeed = 20f;
-    [SerializeField] private Vector3 _addedForce;
+    private Vector3 _horizontalVelocityDelta;
+    private float _stickyOffset = 0f;
+    public Vector3 velocity;
+    public Vector3 currentMovement;
+
+    private void Awake()
+    {
+        //cache the CharacterContoller component
+        _characterController = this.gameObject.GetComponent<CharacterController>();
+    }
+
+    public void SetMovement(Vector3 movement)
+    {
+        currentMovement = movement;
+    }
 
     private void Update()
     {
-        //check if grounded
-        _justGotGrounded = (!_groundedLastFrame && _grounded);
-        _groundedLastFrame = _grounded;
+        //_newVelocity = velocity;
 
+        _newVelocity = currentMovement;
+
+        ComputeVelocity();
+        MoveCharacterController();
+        //ComputeNewVelocity();
     }
 
-    private void FixedUpdate()
+    private void ComputeVelocity()
     {
-        _newVelocity = _velocity;
+        _motion = _newVelocity * Time.deltaTime;
+        _horizontalVelocityDelta.x = _motion.x;
+        _horizontalVelocityDelta.y = 0f;
+        _horizontalVelocityDelta.z = _motion.z;
+        _stickyOffset = Mathf.Max(_characterController.stepOffset, _horizontalVelocityDelta.magnitude);
 
-        AddGravity();
+        _motion -= _stickyOffset * Vector3.up;
     }
 
-    private void AddGravity()
+    //private void ComputeNewVelocity()
+    //{
+    //    velocity = _newVelocity;
+    //}
+
+    private void MoveCharacterController()
     {
-        if(_grounded)
-        {
-            _newVelocity.y = Mathf.Min(0, _newVelocity.y) - _gravity * Time.deltaTime;
-        }
-        else
-        {
-            _newVelocity.y = _velocity.y - _gravity * Time.deltaTime;
-            _newVelocity.y = Mathf.Max(_newVelocity.y, -_maximumFallSpeed);
-        }
-
-        _newVelocity += _addedForce;
-        _addedForce = Vector3.zero;
+        Debug.Log(_motion);
+        _collisionFlags = _characterController.Move(_motion);
     }
+    
 }
