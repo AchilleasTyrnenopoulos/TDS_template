@@ -18,12 +18,7 @@ public class CharacterBase : MonoBehaviour
 
     private void Update()
     {
-        //process character abilities
-        foreach (var ability in _characterAbilities)
-        {
-            if (ability.enabled)
-                ability.ProcessAbility();
-        }
+
     }
 
 }
